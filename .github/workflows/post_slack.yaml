@@ -1,0 +1,69 @@
+name: Post to slack example
+on:
+  workflow_dispatch:
+jobs:
+  post-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        id: set-result
+        with:
+          result-encoding: string
+          script: |
+            const getReviewersName = (requested_reviewers) => {
+              return requested_reviewers.map((reviewers) => {
+                return reviewers.login;
+              });
+            };
+
+            const getPullRequests = (pulls) => {
+              return pulls.map((pull) => {
+                return {
+                  id: pull.number,
+                  reviewers: getReviewersName(pull.requested_reviewers),
+                }
+              });
+            }
+
+            const respPulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const pulls = getPullRequests(respPulls);
+
+            const encodedMessages = pulls.reduce((messages, pull) => {
+              const reviewers = pull.reviewers.reduce((acc, cur) => {
+                return `${acc}${cur} `
+              }, '').replace(/ $/, '');
+              
+              const message = `${reviewers}\\nhttps://example.com/pulls/{$pull.id}`;
+              const encodedMessage = Buffer.from(message).toString('Base64');
+
+              return `${messages}${encodedMessage} ``
+            }, '');
+
+
+            return encodedMessages;
+      - run: |
+          postSlack() {
+            local mes=$1
+            curl \
+              -H 'Authorization: Bearer ${{ secrets.SLACK_TOKEN }}' \
+              -H 'Content-Type: '
+              -d @- <<EOF
+              {
+                token: "${{ secrets.SLACK_TOKEN }}",
+                channel: "#api-test",
+                test: $mes
+              }
+              EOF
+              https://slack.com/api/chat.postMessage
+          }
+
+          encodedMessages=${{steps.set-result.outputs.result}}
+
+          for message in ${encodedMessages[@]}
+          do
+            echo ${message}
+          done

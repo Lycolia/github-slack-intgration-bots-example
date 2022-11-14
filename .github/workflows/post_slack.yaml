@@ -52,7 +52,7 @@ jobs:
           postSlack() {
             local mes=$1
 
-            curl https://slack.com/api/chat.postMessage \
+            curl -sS https://slack.com/api/chat.postMessage \
                 -H 'Authorization: Bearer ${{ secrets.SLACK_TOKEN }}' \
                 -H 'Content-Type: application/json; charset=UTF-8' \
                 -d @- <<EOF

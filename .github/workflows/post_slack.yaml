@@ -61,8 +61,8 @@ jobs:
                     channel: "#api-test",
                     text: "$mes"
                 }
-        EOF
-}
+          EOF
+          }
 
           encodedMessages=(${{steps.set-result.outputs.result}})
 

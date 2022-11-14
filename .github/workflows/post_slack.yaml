@@ -58,7 +58,7 @@ jobs:
                 channel: "#api-test",
                 test: $mes
               }
-              EOF
+            EOF
               https://slack.com/api/chat.postMessage
           }
 

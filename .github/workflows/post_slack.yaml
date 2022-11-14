@@ -25,7 +25,7 @@ jobs:
               });
             }
 
-            const respPulls = await github.rest.pulls.list({
+            const { data: respPulls } = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });

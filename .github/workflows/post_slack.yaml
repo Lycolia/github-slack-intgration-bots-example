@@ -30,7 +30,6 @@ jobs:
               repo: context.repo.repo,
             });
 
-            console.log('respPulls', respPulls)
             const pulls = getPullRequests(respPulls);
 
             const encodedMessages = pulls.reduce((messages, pull) => {

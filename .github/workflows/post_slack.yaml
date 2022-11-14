@@ -34,11 +34,13 @@ jobs:
             const pulls = getPullRequests(respPulls);
 
             const encodedMessages = pulls.reduce((messages, pull) => {
-              const reviewers = pull.reviewers.reduce((acc, cur) => {
+              const reviewersBuff = pull.reviewers.reduce((acc, cur) => {
                 return `${acc}${cur} `
               }, '').replace(/ $/, '');
               
-              const message = `${reviewers}\\nhttps://example.com/pulls/{$pull.id}`;
+              const reviewers = reviewersBuff === '' ? 'レビュアー未設定' : reviewersBuff;
+
+              const message = `${reviewers}\\nhttps://example.com/pulls/${pull.id}`;
               const encodedMessage = Buffer.from(message).toString('Base64');
 
               return `${messages}${encodedMessage} `
@@ -49,22 +51,24 @@ jobs:
       - run: |
           postSlack() {
             local mes=$1
-            curl \
-              -H 'Authorization: Bearer ${{ secrets.SLACK_TOKEN }}' \
-              -H 'Content-Type: '
-              -d @- <<EOF
-              {
-                token: "${{ secrets.SLACK_TOKEN }}",
-                channel: "#api-test",
-                test: $mes
-              }
-            EOF
-              https://slack.com/api/chat.postMessage
-          }
 
-          encodedMessages=${{steps.set-result.outputs.result}}
+            curl https://slack.com/api/chat.postMessage \
+                -H 'Authorization: Bearer ${{ secrets.SLACK_TOKEN }}' \
+                -H 'Content-Type: application/json; charset=UTF-8' \
+                -d @- <<EOF
+                {
+                    token: "${{ secrets.SLACK_TOKEN }}",
+                    channel: "#api-test",
+                    text: "$mes"
+                }
+        EOF
+}
+
+          encodedMessages=(${{steps.set-result.outputs.result}})
 
           for message in ${encodedMessages[@]}
           do
-            echo ${message}
+              decoded_mes=$(echo ${message} | base64 -di)
+              postSlack "$decoded_mes"
           done
+
